@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import RobotGuide from "./components/RobotGuide/RobotGuide.jsx";
 import {
   ArrowDown, ArrowDownRight, ArrowRight, ArrowUpRight, BrainCircuit,
   BriefcaseBusiness, Check, Code2, Cpu, Database, ExternalLink, Github,
@@ -94,6 +95,8 @@ function NeuronCanvas() {
   return <canvas className="neuron-canvas" ref={canvasRef} aria-hidden="true" />;
 }
 
+
+
 function SectionHeading({ eyebrow, title, text, number }) {
   return <div className="section-heading reveal"><div className="section-heading-meta"><span className="eyebrow"><i />{eyebrow}</span>{number && <span className="section-number">{number}</span>}</div><h2>{title}</h2>{text && <p>{text}</p>}</div>;
 }
@@ -111,7 +114,17 @@ export default function SonuPortfolio() {
     if (!("IntersectionObserver" in window)) { nodes.forEach(n => n.classList.add("is-visible")); return; }
     const observer = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("is-visible"); observer.unobserve(e.target); } }), { threshold: .1, rootMargin: "0px 0px -24px 0px" });
     nodes.forEach((node, i) => { node.style.setProperty("--reveal-delay", `${(i % 4) * 75}ms`); observer.observe(node); });
-    return () => observer.disconnect();
+    const updateThread = () => {
+      const grid = document.querySelector(".thread-grid");
+      if (!grid) return;
+      const rect = grid.getBoundingClientRect();
+      const progress = Math.max(0, Math.min(1, (window.innerHeight - rect.top) / (rect.height + window.innerHeight * 0.25)));
+      grid.style.setProperty("--thread-progress", String(progress));
+    };
+    updateThread();
+    window.addEventListener("scroll", updateThread, { passive: true });
+    window.addEventListener("resize", updateThread);
+    return () => { observer.disconnect(); window.removeEventListener("scroll", updateThread); window.removeEventListener("resize", updateThread); };
   }, []);
   useEffect(() => {
     if (!activeProject) return;
@@ -122,7 +135,7 @@ export default function SonuPortfolio() {
   const closeMenu = () => setMenuOpen(false);
 
   return <div className="portfolio-shell">
-    <NeuronCanvas /><div className="ambient ambient-one" /><div className="ambient ambient-two" /><div className="ambient ambient-three" />
+    <NeuronCanvas /><RobotGuide /><div className="ambient ambient-one" /><div className="ambient ambient-two" /><div className="ambient ambient-three" />
     <header className="site-header">
       <a className="wordmark" href="#home" onClick={closeMenu} aria-label="Sonu Kumar home"><span className="wordmark-mark">s<span>.</span>k</span><span className="wordmark-label">AI ENGINEER <b>·</b> PORTFOLIO</span></a>
       <button className="mobile-menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation" aria-expanded={menuOpen}>{menuOpen ? <X /> : <Menu />}</button>
@@ -133,18 +146,49 @@ export default function SonuPortfolio() {
       <section className="hero" id="home">
         <div className="hero-ambient-ring ring-a" /><div className="hero-ambient-ring ring-b" /><div className="hero-ambient-ring ring-c" />
         <div className="hero-status"><span className="status-pulse" /> OPEN TO AI/ML OPPORTUNITIES <span className="status-divider" /> INDIA · REMOTE</div>
-        <div className="hero-center reveal">
-          <p className="hero-kicker"><span>HELLO, WORLD</span><span className="kicker-line" /></p>
-          <h1>Sonu <span className="hero-name-accent">Kumar</span><span className="hero-period">.</span></h1>
-          <div className="hero-role"><span className="role-bracket">[</span> AI / ML ENGINEER <span className="role-separator">—</span> GENERATIVE AI <span className="role-bracket">]</span></div>
-          <p className="hero-description">Building intelligent systems that connect <span>models, data, and products.</span> From retrieval-augmented generation to computer vision, I turn complex AI into practical software.</p>
-          <div className="hero-actions"><a className="button button-primary" href="#work">Explore selected work <ArrowDownRight size={16} /></a><a className="button button-ghost" href={profile.resume} download>Download résumé <ArrowDown size={15} /></a></div>
-          <div className="hero-socials"><a href={profile.github} target="_blank" rel="noreferrer"><Github /> <span>GITHUB</span><ArrowUpRight /></a><i /><a href={profile.linkedin} target="_blank" rel="noreferrer"><Linkedin /><span>LINKEDIN</span><ArrowUpRight /></a><i /><a href={`mailto:${profile.email}`}><Mail /><span>EMAIL</span><ArrowUpRight /></a></div>
+        <div className="hero-layout">
+          <div className="hero-center reveal">
+            <p className="hero-kicker"><span>HELLO, WORLD</span><span className="kicker-line" /></p>
+            <h1>Sonu <span className="hero-name-accent">Kumar</span><span className="hero-period">.</span></h1>
+            <div className="hero-role"><span className="role-bracket">[</span> AI / ML ENGINEER <span className="role-separator">—</span> GENERATIVE AI <span className="role-bracket">]</span></div>
+            <p className="hero-description">Building intelligent systems that connect <span>models, data, and products.</span> From retrieval-augmented generation to computer vision, I turn complex AI into practical software.</p>
+            <div className="hero-actions"><a className="button button-primary" href="#work">Explore selected work <ArrowDownRight size={16} /></a><a className="button button-ghost" href={profile.resume} download>Download résumé <ArrowDown size={15} /></a></div>
+            <div className="hero-socials"><a href={profile.github} target="_blank" rel="noreferrer"><Github /> <span>GITHUB</span><ArrowUpRight /></a><i /><a href={profile.linkedin} target="_blank" rel="noreferrer"><Linkedin /><span>LINKEDIN</span><ArrowUpRight /></a><i /><a href={`mailto:${profile.email}`}><Mail /><span>EMAIL</span><ArrowUpRight /></a></div>
+          </div>
+
+          <aside className="hero-portrait reveal" aria-label="Portrait of Sonu Kumar">
+            <div className="portrait-orbit portrait-orbit-one" aria-hidden="true" />
+            <div className="portrait-orbit portrait-orbit-two" aria-hidden="true" />
+            <div className="portrait-frame">
+              {!photoFailed ? (
+                <img
+                  className="portrait-image"
+                  src="/sonu-passport.jpg"
+                  alt="Sonu Kumar, AI and Machine Learning Engineer"
+                  onError={() => setPhotoFailed(true)}
+                />
+              ) : (
+                <div className="portrait-fallback" role="img" aria-label="Sonu Kumar portrait placeholder">
+                  <span>SK</span>
+                  <small>Add sonu-passport.jpg to the public folder</small>
+                </div>
+              )}
+              <span className="portrait-corner portrait-corner-tl" aria-hidden="true" />
+              <span className="portrait-corner portrait-corner-tr" aria-hidden="true" />
+              <span className="portrait-corner portrait-corner-bl" aria-hidden="true" />
+              <span className="portrait-corner portrait-corner-br" aria-hidden="true" />
+            </div>
+            <div className="portrait-badge portrait-badge-top">
+              <span className="portrait-badge-icon"><BrainCircuit size={15} /></span>
+              <span><small>FOCUS AREA</small><strong>Applied AI</strong></span>
+            </div>
+            <div className="portrait-badge portrait-badge-bottom">
+              <span className="portrait-live-dot" />
+              <span><strong>AI / ML ENGINEER</strong><small>GenAI · RAG · Computer Vision</small></span>
+            </div>
+            <p className="portrait-caption"><span>01</span> HUMAN CREATIVITY. MACHINE INTELLIGENCE.</p>
+          </aside>
         </div>
-        <FloatingCard className="float-a" icon={BrainCircuit} label="GENERATIVE AI" value="LLM systems" accent="cyan" />
-        <FloatingCard className="float-b" icon={Network} label="RETRIEVAL" value="RAG pipelines" accent="violet" />
-        <FloatingCard className="float-c" icon={ScanEye} label="COMPUTER VISION" value="Visual intelligence" accent="blue" />
-        <FloatingCard className="float-d" icon={Code2} label="ENGINEERING" value="From API to UI" accent="mint" />
         <div className="hero-orbit-node node-a"><span /></div><div className="hero-orbit-node node-b"><span /></div><div className="hero-orbit-node node-c"><span /></div>
         <a className="scroll-cue" href="#about"><span className="scroll-cue-line" /> SCROLL TO EXPLORE <ArrowDown size={13} /></a>
         <div className="hero-index"><span>01</span><i /> 06 SECTIONS</div>
@@ -157,7 +201,7 @@ export default function SonuPortfolio() {
         <div className="about-content reveal"><p className="about-lead">I build complete AI applications — not just isolated models.</p><p>My work spans LLM-powered workflows, retrieval-augmented generation, semantic search, NLP, and computer vision. I connect AI components to APIs, databases, and web interfaces to turn technical concepts into usable products.</p><p>I care about clear system design, useful user experiences, and solutions that can be understood, maintained, and improved.</p><div className="about-facts"><div><span>01</span><strong>Product mindset</strong><small>From idea to application</small></div><div><span>02</span><strong>Applied AI</strong><small>LLMs, retrieval, vision</small></div><div><span>03</span><strong>Full-stack delivery</strong><small>APIs, data, interface</small></div></div><div className="about-code-note"><Terminal size={15} /><span>const approach = <b>"build · measure · improve"</b>;</span></div></div>
       </section>
 
-      <section className="work-section section-pad" id="work"><div className="section-wrap"><SectionHeading eyebrow="02 / SELECTED WORK" number="02" title={<>Projects built to<br /><span className="muted-heading">solve real problems.</span></>} text="A selection of AI systems, automation workflows, and computer-vision experiments. Open any project to inspect the approach and contributions." /><div className="project-grid">{projects.map(project => { const Icon = project.icon; return <button className={`project-card accent-${project.accent}`} key={project.id} onClick={() => setActiveProject(project)} aria-label={`View ${project.title} case study`}><div className="project-card-top"><span>CASE STUDY / {project.id}</span><span className="project-open"><ArrowUpRight /></span></div><div className="project-visual"><div className="project-visual-grid" /><div className="project-visual-orbit orbit-one" /><div className="project-visual-orbit orbit-two" /><div className="project-visual-icon"><Icon /></div><span className="project-visual-code">{project.id} <i /> SYSTEM</span></div><span className="project-category">{project.category}</span><h3>{project.title}</h3><p>{project.summary}</p><div className="tag-row">{project.stack.slice(0, 4).map(tag => <span key={tag}>{tag}</span>)}</div><div className="project-card-bottom"><span>{project.metric}</span><span className="project-card-link">EXPLORE <ArrowRight /></span></div></button>; })}</div><div className="work-footnote"><span>i</span> Repository and demo links are omitted where the résumé does not provide verified public URLs.</div></div></section>
+      <section className="work-section section-pad" id="work"><div className="section-wrap"><SectionHeading eyebrow="02 / SELECTED WORK" number="02" title={<>Projects built to<br /><span className="muted-heading">solve real problems.</span></>} text="A selection of AI systems, automation workflows, and computer-vision experiments. Open any project to inspect the approach and contributions." /><div className="project-grid thread-grid"><svg className="thread-svg" viewBox="0 0 1000 1250" preserveAspectRatio="none" aria-hidden="true"><path className="thread-path-base" d="M500 0 C500 100 150 110 180 245 S800 330 790 465 S150 570 180 690 S820 800 790 930 S250 1030 500 1250"/><path className="thread-path-progress" d="M500 0 C500 100 150 110 180 245 S800 330 790 465 S150 570 180 690 S820 800 790 930 S250 1030 500 1250"/></svg>{projects.map((project, projectIndex) => { const Icon = project.icon; return <button style={{ "--project-index": projectIndex }} className={`project-card accent-${project.accent}`} key={project.id} onClick={() => setActiveProject(project)} aria-label={`View ${project.title} case study`}><div className="project-card-top"><span>CASE STUDY / {project.id}</span><span className="project-open"><ArrowUpRight /></span></div><div className="project-visual"><div className="project-visual-grid" /><div className="project-visual-orbit orbit-one" /><div className="project-visual-orbit orbit-two" /><div className="project-visual-icon"><Icon /></div><span className="project-visual-code">{project.id} <i /> SYSTEM</span></div><span className="project-category">{project.category}</span><h3>{project.title}</h3><p>{project.summary}</p><div className="tag-row">{project.stack.slice(0, 4).map(tag => <span key={tag}>{tag}</span>)}</div><div className="project-card-bottom"><span>{project.metric}</span><span className="project-card-link">EXPLORE <ArrowRight /></span></div></button>; })}</div><div className="work-footnote"><span>i</span> Repository and demo links are omitted where the résumé does not provide verified public URLs.</div></div></section>
 
       <section className="section-wrap experience-section section-pad" id="experience"><SectionHeading eyebrow="03 / THE JOURNEY" number="03" title={<>Experience shaped<br /><span className="muted-heading">by building.</span></>} text="A chronological view of professional experience and practical work, using the dates available in the résumé." /><div className="experience-timeline"><div className="timeline-rail" />{experience.map((item, index) => <article className="experience-item" key={`${item.company}-${item.role}`}><div className="experience-marker"><span>{String(index + 1).padStart(2, "0")}</span><i /></div><div className="experience-period">{item.period}</div><div className="experience-main"><div className="experience-title-row"><div><h3>{item.role}</h3><p>{item.company}</p></div><span className="experience-type">{item.kind}</span></div><ul>{item.points.map(point => <li key={point}><Check size={14} />{point}</li>)}</ul></div></article>)}</div></section>
 
